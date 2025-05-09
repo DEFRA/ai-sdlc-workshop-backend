@@ -5,7 +5,7 @@ I have an existing backend node.js + express API server that handles forms submi
 Look at the existing codebase and determine the patterns and files that need to be updated to add the parameter, including any test files.
 
 # IMPLEMENTATION PHASE
-- I want to add a new parameter called `confirmation_preference` to the existing data object, with the options of one of three values: "email", "phone", or "none".
+- I want to add a new parameter called `receipt_preference` to the existing data object, with the options of one of three values: "email", "phone", or "none".
 - I want to add a new parameter called `email_address`, that is a string value that accepts valid email addresses.  Make sure any validation libraries are included if needed.
 - I want to add a new parameter called `mobile_phone_number`, that is a string value that accepts any string
 - Implement a proper database migration approach that:
@@ -23,7 +23,7 @@ Look at the existing codebase and determine the patterns and files that need to 
 
 ```json
 {
-  "confirmation_preference": "email",  // or "phone", "none"
+  "receipt_preference": "email",  // or "phone", "none"
   "email_address": "user@example.com",   // only if preference is "email"
   "mobile_phone_number": "+1234567890"         // only if preference is "phone"
 }
@@ -36,9 +36,9 @@ When complete, you should have the following:
   - Should add missing columns using `ALTER TABLE` statements
   - Should be automatically executed during application startup
   - Should handle all potential errors gracefully
-- An updated GET and POST /api/v1/registrations API endpoints including the new `confirmation_preference`, `email_address` and `mobile_phone_number` data fields
+- An updated GET and POST /api/v1/registrations API endpoints including the new `receipt_preference`, `email_address` and `mobile_phone_number` data fields
 - The `email_address` should be validated as a valid email (using ajv-formats or similar)
-- Conditional validation requiring email address when confirmation_preference is "email"
-- Conditional validation requiring mobile phone number when confirmation_preference is "phone"
+- Conditional validation requiring email address when receipt_preference is "email"
+- Conditional validation requiring mobile phone number when receipt_preference is "phone"
 - Updated Swagger documentation for all new fields
-- Updated tests that include the new `confirmation_preference`, `email_address` and `mobile_phone_number` data fields
+- Updated tests that include the new `receipt_preference`, `email_address` and `mobile_phone_number` data fields
