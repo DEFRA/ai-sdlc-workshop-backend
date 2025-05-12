@@ -1,6 +1,6 @@
 ---
-description: 
-globs: *.test.js
+description: Testing
+globs: 
 alwaysApply: false
 ---
 # Testing Rules
