@@ -31,4 +31,4 @@ I have provided you with a Product Requirements document(PRD). Please analyze th
 - Standards: Follow the testing cursor rules
 
 ## Output
-Provide the complete test implementation in a single code block, following all project conventions and testing standards.
+After creating the tests please execute them and fix any issues

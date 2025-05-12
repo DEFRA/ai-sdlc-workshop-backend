@@ -68,3 +68,66 @@ it('should handle errors', async () => {
 ## Test Cleanup
 - Always clean up resources after tests
 - Example: `afterAll((done) => { db.close(done); });`
+
+## API Route Path Setup
+- When testing versioned APIs, use the full route path in tests:
+```javascript
+// Setup in beforeAll
+app = express();
+app.use('/api/v1/resources', resourceRoutes);
+
+// In tests
+const response = await request(app)
+  .post('/api/v1/resources')  // Use full path, not just '/'
+  .send(requestData);
+```
+
+## Validation Error Testing
+- For validation errors, avoid over-specific assertions that may break if error messages change:
+```javascript
+// Good practice - more resilient to implementation changes
+it('should return validation error for invalid data', async () => {
+  const response = await request(app).post('/api/v1/resources').send(invalidData);
+  expect(response.status).toBe(422);
+  expect(response.body).toHaveProperty('status', 'error');
+  expect(response.body).toHaveProperty('message');
+  expect(Array.isArray(response.body.message)).toBe(true);
+  expect(response.body.message.length).toBeGreaterThan(0);
+});
+
+// Avoid brittle tests that depend on exact error text
+// BAD: expect(response.body.message).toContain('specific error text');
+```
+
+## Testing Implementation-Specific Behaviors
+- For testing ID generation, reference numbers, or other randomly generated values:
+```javascript
+// Mock random value generators for deterministic tests
+jest.mock('uuid', () => ({
+  v4: jest.fn().mockReturnValue('fixed-uuid-for-testing')
+}));
+
+// For complex collision handling:
+it('should handle collisions appropriately', async () => {
+  // Set up a controlled environment 
+  // 1. Insert a record with a known ID/reference
+  await insertTestRecord({ referenceNumber: 'KNOWN123' });
+  
+  // 2. Mock the database to simulate a collision then success
+  const mockDb = {
+    get: (query, params, callback) => {
+      if (query.includes('check_for_collision') && params[0] === 'KNOWN123') {
+        callback(null, { exists: true }); // Simulate collision
+      } else {
+        callback(null, null); // No collision for other values
+      }
+    },
+    // Other db methods as needed
+  };
+  
+  // 3. Test the endpoint and verify it handles the collision
+  const response = await request(app).post('/api/v1/resources').send(validData);
+  expect(response.status).toBe(201);
+  expect(response.body.referenceNumber).not.toBe('KNOWN123');
+});
+```
