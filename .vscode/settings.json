@@ -1,0 +1,12 @@
+{
+    "github.copilot.advanced": {
+        "rules": {
+            "*": [
+                { "path": ".vscode/rules/application.md" }
+            ],
+            "*.test.js": [
+                { "path": ".vscode/rules/testing.md" }
+            ]
+        }
+    }
+}

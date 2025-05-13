@@ -1,0 +1,1 @@
+Run a SQL query against my local sqllite database. The query should get any registration records whose  referenceNumber = ''. Execute this against my local sqllite database
