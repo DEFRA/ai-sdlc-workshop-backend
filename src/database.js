@@ -27,8 +27,27 @@ async function initializeDatabase() {
         return;
       }
       console.log('Connected to SQLite database');
-      console.log('Database initialized');
-      resolve();
+      
+      // Create the registrations table if it doesn't exist
+      db.run(`
+        CREATE TABLE IF NOT EXISTS registrations (
+          id TEXT PRIMARY KEY,
+          referenceNumber TEXT NOT NULL,
+          formType TEXT NOT NULL,
+          formTypeOtherText TEXT,
+          penColourNotUsed TEXT NOT NULL,
+          guidanceRead TEXT NOT NULL,
+          createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `, (err) => {
+        if (err) {
+          console.error('Error creating registrations table:', err.message);
+          reject(err);
+          return;
+        }
+        console.log('Database initialized');
+        resolve();
+      });
     });
   });
 }

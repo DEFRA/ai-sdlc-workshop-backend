@@ -7,6 +7,7 @@ const swaggerUi = require('swagger-ui-express');
 const { initializeDatabase } = require('./database');
 
 const healthRoutes = require('./routes/health');
+const registrationsRoutes = require('./routes/registrations');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -47,6 +48,7 @@ app.use('/api/v1', apiV1Router);
 
 // Register routes with the versioned router
 apiV1Router.use('/health', healthRoutes);
+apiV1Router.use('/registrations', registrationsRoutes);
 
 // Root route
 app.get('/', (req, res) => {
