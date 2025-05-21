@@ -74,6 +74,17 @@ async function generateUniqueReference(db) {
  *               guidanceRead:
  *                 type: string
  *                 enum: [YES, LOOKED_AT_NOW, NO]
+ *               receipt_preference:
+ *                 type: string
+ *                 enum: [email, phone, none]
+ *                 description: Preferred method to receive receipt
+ *               email_address:
+ *                 type: string
+ *                 format: email
+ *                 description: Email address (required if receipt_preference is 'email')
+ *               mobile_phone_number:
+ *                 type: string
+ *                 description: Mobile phone number (required if receipt_preference is 'phone')
  *             required:
  *               - formType
  *               - penColourNotUsed
@@ -126,12 +137,39 @@ router.post('/', validateRegistrationRequest, async (req, res) => {
   
   try {
     const referenceNumber = await generateUniqueReference(db);
-    const { formType, formTypeOtherText, penColourNotUsed, guidanceRead } = req.body;
+    const { 
+      formType, 
+      formTypeOtherText, 
+      penColourNotUsed, 
+      guidanceRead,
+      receipt_preference,
+      email_address,
+      mobile_phone_number
+    } = req.body;
     
     db.run(
-      `INSERT INTO registrations (id, referenceNumber, formType, formTypeOtherText, penColourNotUsed, guidanceRead)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, referenceNumber, formType, formTypeOtherText || null, penColourNotUsed, guidanceRead],
+      `INSERT INTO registrations (
+        id, 
+        referenceNumber, 
+        formType, 
+        formTypeOtherText, 
+        penColourNotUsed, 
+        guidanceRead, 
+        receipt_preference, 
+        email_address, 
+        mobile_phone_number
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id, 
+        referenceNumber, 
+        formType, 
+        formTypeOtherText || null, 
+        penColourNotUsed, 
+        guidanceRead,
+        receipt_preference || null,
+        email_address || null,
+        mobile_phone_number || null
+      ],
       (err) => {
         if (err) {
           console.error('Database error:', err);
@@ -191,6 +229,14 @@ router.post('/', validateRegistrationRequest, async (req, res) => {
  *                   type: string
  *                 guidanceRead:
  *                   type: string
+ *                 receipt_preference:
+ *                   type: string
+ *                   enum: [email, phone, none]
+ *                 email_address:
+ *                   type: string
+ *                   format: email
+ *                 mobile_phone_number:
+ *                   type: string
  *       404:
  *         description: Registration not found
  *         content:
@@ -219,7 +265,8 @@ router.get('/:id', (req, res) => {
   }
   
   db.get(
-    `SELECT id, referenceNumber, formType, formTypeOtherText, penColourNotUsed, guidanceRead
+    `SELECT id, referenceNumber, formType, formTypeOtherText, penColourNotUsed, guidanceRead, 
+     receipt_preference, email_address, mobile_phone_number
      FROM registrations
      WHERE id = ?`,
     [id],

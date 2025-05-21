@@ -1,6 +1,10 @@
 const Ajv = require('ajv');
 const ajv = new Ajv();
 
+// Add email format validation
+const addFormats = require("ajv-formats");
+addFormats(ajv);
+
 // Registration schema for validation
 const registrationSchema = {
   type: 'object',
@@ -20,6 +24,20 @@ const registrationSchema = {
     guidanceRead: { 
       type: 'string',
       enum: ['YES', 'LOOKED_AT_NOW', 'NO']
+    },
+    receipt_preference: {
+      type: 'string',
+      enum: ['email', 'phone', 'none'],
+      nullable: true
+    },
+    email_address: {
+      type: 'string',
+      format: 'email',
+      nullable: true
+    },
+    mobile_phone_number: {
+      type: 'string',
+      nullable: true
     }
   },
   required: ['formType', 'penColourNotUsed', 'guidanceRead'],
@@ -32,6 +50,28 @@ const registrationSchema = {
         required: ['formTypeOtherText'],
         properties: {
           formTypeOtherText: { type: 'string', minLength: 1 }
+        }
+      }
+    },
+    {
+      if: {
+        properties: { receipt_preference: { const: 'email' } }
+      },
+      then: {
+        required: ['email_address'],
+        properties: {
+          email_address: { type: 'string', format: 'email', minLength: 1 }
+        }
+      }
+    },
+    {
+      if: {
+        properties: { receipt_preference: { const: 'phone' } }
+      },
+      then: {
+        required: ['mobile_phone_number'],
+        properties: {
+          mobile_phone_number: { type: 'string', minLength: 1 }
         }
       }
     }

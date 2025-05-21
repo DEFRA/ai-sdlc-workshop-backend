@@ -43,6 +43,9 @@ describe('Registrations API Tests', () => {
           formTypeOtherText TEXT,
           penColourNotUsed TEXT NOT NULL,
           guidanceRead TEXT NOT NULL,
+          receipt_preference TEXT,
+          email_address TEXT,
+          mobile_phone_number TEXT,
           createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `, (err) => {
@@ -73,7 +76,8 @@ describe('Registrations API Tests', () => {
       const validData = {
         formType: 'AD01',
         penColourNotUsed: 'BLUE',
-        guidanceRead: 'YES'
+        guidanceRead: 'YES',
+        receipt_preference: 'none'
       };
 
       // When I POST it to the endpoint
@@ -97,9 +101,182 @@ describe('Registrations API Tests', () => {
           expect(row.penColourNotUsed).toBe(validData.penColourNotUsed);
           expect(row.guidanceRead).toBe(validData.guidanceRead);
           expect(row.formTypeOtherText).toBeNull();
+          expect(row.receipt_preference).toBe('none');
+          expect(row.email_address).toBeNull();
+          expect(row.mobile_phone_number).toBeNull();
           resolve();
         });
       });
+    });
+
+    it('should create a registration with receipt preference of email', async () => {
+      // Given a valid registration with email receipt preference
+      const validData = {
+        formType: 'AD01',
+        penColourNotUsed: 'BLUE',
+        guidanceRead: 'YES',
+        receipt_preference: 'email',
+        email_address: 'test@example.com'
+      };
+
+      // When I POST it to the endpoint
+      const response = await request(app)
+        .post('/api/v1/registrations')
+        .send(validData)
+        .expect('Content-Type', /json/)
+        .expect(201);
+
+      // Then I should get a success response
+      expect(response.body).toHaveProperty('id');
+      expect(response.body).toHaveProperty('referenceNumber');
+
+      // And the data should be persisted correctly
+      return new Promise((resolve) => {
+        db.get('SELECT * FROM registrations WHERE id = ?', [response.body.id], (err, row) => {
+          if (err) throw err;
+          expect(row).toBeTruthy();
+          expect(row.receipt_preference).toBe('email');
+          expect(row.email_address).toBe('test@example.com');
+          expect(row.mobile_phone_number).toBeNull();
+          resolve();
+        });
+      });
+    });
+
+    it('should create a registration with receipt preference of phone', async () => {
+      // Given a valid registration with phone receipt preference
+      const validData = {
+        formType: 'AD01',
+        penColourNotUsed: 'BLUE',
+        guidanceRead: 'YES',
+        receipt_preference: 'phone',
+        mobile_phone_number: '+1234567890'
+      };
+
+      // When I POST it to the endpoint
+      const response = await request(app)
+        .post('/api/v1/registrations')
+        .send(validData)
+        .expect('Content-Type', /json/)
+        .expect(201);
+
+      // Then I should get a success response
+      expect(response.body).toHaveProperty('id');
+      expect(response.body).toHaveProperty('referenceNumber');
+
+      // And the data should be persisted correctly
+      return new Promise((resolve) => {
+        db.get('SELECT * FROM registrations WHERE id = ?', [response.body.id], (err, row) => {
+          if (err) throw err;
+          expect(row).toBeTruthy();
+          expect(row.receipt_preference).toBe('phone');
+          expect(row.mobile_phone_number).toBe('+1234567890');
+          expect(row.email_address).toBeNull();
+          resolve();
+        });
+      });
+    });
+
+    it('should create a registration with receipt preference of none', async () => {
+      // Given a valid registration with no receipt preference
+      const validData = {
+        formType: 'AD01',
+        penColourNotUsed: 'BLUE',
+        guidanceRead: 'YES',
+        receipt_preference: 'none'
+      };
+
+      // When I POST it to the endpoint
+      const response = await request(app)
+        .post('/api/v1/registrations')
+        .send(validData)
+        .expect('Content-Type', /json/)
+        .expect(201);
+
+      // Then I should get a success response
+      expect(response.body).toHaveProperty('id');
+      expect(response.body).toHaveProperty('referenceNumber');
+
+      // And the data should be persisted correctly
+      return new Promise((resolve) => {
+        db.get('SELECT * FROM registrations WHERE id = ?', [response.body.id], (err, row) => {
+          if (err) throw err;
+          expect(row).toBeTruthy();
+          expect(row.receipt_preference).toBe('none');
+          expect(row.email_address).toBeNull();
+          expect(row.mobile_phone_number).toBeNull();
+          resolve();
+        });
+      });
+    });
+
+    it('should reject registration with email preference but no email address', async () => {
+      // Given an invalid registration with email preference but no email
+      const invalidData = {
+        formType: 'AD01',
+        penColourNotUsed: 'BLUE',
+        guidanceRead: 'YES',
+        receipt_preference: 'email'
+        // Missing email_address
+      };
+
+      // When I POST it to the endpoint
+      const response = await request(app)
+        .post('/api/v1/registrations')
+        .send(invalidData)
+        .expect('Content-Type', /json/)
+        .expect(422);
+
+      // Then I should get a validation error
+      expect(response.body).toHaveProperty('status', 'error');
+      expect(response.body).toHaveProperty('message', 'Validation failed');
+      expect(response.body).toHaveProperty('errors');
+    });
+
+    it('should reject registration with phone preference but no phone number', async () => {
+      // Given an invalid registration with phone preference but no phone number
+      const invalidData = {
+        formType: 'AD01',
+        penColourNotUsed: 'BLUE',
+        guidanceRead: 'YES',
+        receipt_preference: 'phone'
+        // Missing mobile_phone_number
+      };
+
+      // When I POST it to the endpoint
+      const response = await request(app)
+        .post('/api/v1/registrations')
+        .send(invalidData)
+        .expect('Content-Type', /json/)
+        .expect(422);
+
+      // Then I should get a validation error
+      expect(response.body).toHaveProperty('status', 'error');
+      expect(response.body).toHaveProperty('message', 'Validation failed');
+      expect(response.body).toHaveProperty('errors');
+    });
+
+    it('should reject registration with invalid email format', async () => {
+      // Given an invalid registration with invalid email format
+      const invalidData = {
+        formType: 'AD01',
+        penColourNotUsed: 'BLUE',
+        guidanceRead: 'YES',
+        receipt_preference: 'email',
+        email_address: 'not-an-email'
+      };
+
+      // When I POST it to the endpoint
+      const response = await request(app)
+        .post('/api/v1/registrations')
+        .send(invalidData)
+        .expect('Content-Type', /json/)
+        .expect(422);
+
+      // Then I should get a validation error
+      expect(response.body).toHaveProperty('status', 'error');
+      expect(response.body).toHaveProperty('message', 'Validation failed');
+      expect(response.body).toHaveProperty('errors');
     });
 
     it('should create a registration with OTHER form type and text', async () => {
@@ -108,7 +285,8 @@ describe('Registrations API Tests', () => {
         formType: 'OTHER',
         formTypeOtherText: 'Custom Form Type',
         penColourNotUsed: 'RED',
-        guidanceRead: 'NO'
+        guidanceRead: 'NO',
+        receipt_preference: 'none'
       };
 
       // When I POST it to the endpoint
@@ -131,6 +309,7 @@ describe('Registrations API Tests', () => {
           expect(row.formTypeOtherText).toBe('Custom Form Type');
           expect(row.penColourNotUsed).toBe('RED');
           expect(row.guidanceRead).toBe('NO');
+          expect(row.receipt_preference).toBe('none');
           resolve();
         });
       });
@@ -199,6 +378,27 @@ describe('Registrations API Tests', () => {
       expect(response.body).toHaveProperty('message', 'Validation failed');
     });
 
+    it('should reject registration with invalid receipt preference', async () => {
+      // Given a registration with invalid receipt preference
+      const invalidData = {
+        formType: 'AD01',
+        penColourNotUsed: 'BLUE',
+        guidanceRead: 'YES',
+        receipt_preference: 'invalid_preference'
+      };
+
+      // When I POST it to the endpoint
+      const response = await request(app)
+        .post('/api/v1/registrations')
+        .send(invalidData)
+        .expect('Content-Type', /json/)
+        .expect(422);
+
+      // Then I should get a validation error
+      expect(response.body).toHaveProperty('status', 'error');
+      expect(response.body).toHaveProperty('message', 'Validation failed');
+    });
+
     it('should reject registration with missing required fields', async () => {
       // Given a registration missing required fields
       const invalidData = {
@@ -223,7 +423,8 @@ describe('Registrations API Tests', () => {
       const validData = {
         formType: 'AD01',
         penColourNotUsed: 'BLUE',
-        guidanceRead: 'YES'
+        guidanceRead: 'YES',
+        receipt_preference: 'none'
       };
 
       // And a database that throws an error on insert
@@ -261,7 +462,10 @@ describe('Registrations API Tests', () => {
         formType: 'AD01',
         formTypeOtherText: null,
         penColourNotUsed: 'BLUE',
-        guidanceRead: 'YES'
+        guidanceRead: 'YES',
+        receipt_preference: 'email',
+        email_address: 'test@example.com',
+        mobile_phone_number: null
       };
 
       // Make sure we use the original db, not the one we mocked in the previous test
@@ -278,6 +482,9 @@ describe('Registrations API Tests', () => {
             formTypeOtherText TEXT,
             penColourNotUsed TEXT NOT NULL,
             guidanceRead TEXT NOT NULL,
+            receipt_preference TEXT,
+            email_address TEXT,
+            mobile_phone_number TEXT,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
           )
         `, (err) => {
@@ -288,10 +495,10 @@ describe('Registrations API Tests', () => {
 
       await new Promise((resolve) => {
         originalDb.run(
-          `INSERT INTO registrations (id, referenceNumber, formType, formTypeOtherText, penColourNotUsed, guidanceRead)
-           VALUES (?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO registrations (id, referenceNumber, formType, formTypeOtherText, penColourNotUsed, guidanceRead, receipt_preference, email_address, mobile_phone_number)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [testData.id, testData.referenceNumber, testData.formType, testData.formTypeOtherText, 
-           testData.penColourNotUsed, testData.guidanceRead],
+           testData.penColourNotUsed, testData.guidanceRead, testData.receipt_preference, testData.email_address, testData.mobile_phone_number],
           (err) => {
             if (err) throw err;
             resolve();
@@ -311,6 +518,9 @@ describe('Registrations API Tests', () => {
       expect(response.body).toHaveProperty('formType', testData.formType);
       expect(response.body).toHaveProperty('penColourNotUsed', testData.penColourNotUsed);
       expect(response.body).toHaveProperty('guidanceRead', testData.guidanceRead);
+      expect(response.body).toHaveProperty('receipt_preference', testData.receipt_preference);
+      expect(response.body).toHaveProperty('email_address', testData.email_address);
+      expect(response.body).toHaveProperty('mobile_phone_number', testData.mobile_phone_number);
       
       // Close the db connection we created just for this test
       await new Promise((resolve) => {
@@ -336,6 +546,9 @@ describe('Registrations API Tests', () => {
             formTypeOtherText TEXT,
             penColourNotUsed TEXT NOT NULL,
             guidanceRead TEXT NOT NULL,
+            receipt_preference TEXT,
+            email_address TEXT,
+            mobile_phone_number TEXT,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
           )
         `, (err) => {
@@ -378,6 +591,9 @@ describe('Registrations API Tests', () => {
             formTypeOtherText TEXT,
             penColourNotUsed TEXT NOT NULL,
             guidanceRead TEXT NOT NULL,
+            receipt_preference TEXT,
+            email_address TEXT,
+            mobile_phone_number TEXT,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
           )
         `, (err) => {
@@ -403,23 +619,24 @@ describe('Registrations API Tests', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      // Given a valid ID
+      // Given a valid UUID
       const validId = '2b3c55b8-a480-4f2e-bf0d-8d3f9e2bf4be';
-
+      
       // And a database that throws an error
       const mockDb = {
         get: (query, params, callback) => {
-          callback(new Error('Database error'));
+          // Simulate DB error
+          callback(new Error('Database error'), null);
         }
       };
       getDatabase.mockReturnValue(mockDb);
-
+      
       // When I GET the registration by ID
       const response = await request(app)
         .get(`/api/v1/registrations/${validId}`)
         .expect('Content-Type', /json/)
         .expect(503);
-
+      
       // Then I should get a service unavailable error
       expect(response.body).toHaveProperty('status', 'error');
       expect(response.body).toHaveProperty('message', 'Service unavailable');
@@ -428,77 +645,19 @@ describe('Registrations API Tests', () => {
 
   describe('Reference Number Generation', () => {
     it('should generate a valid reference number (8 alphanumeric characters)', async () => {
-      // Given a valid registration request
+      // Given a valid registration
       const validData = {
         formType: 'AD01',
         penColourNotUsed: 'BLUE',
-        guidanceRead: 'YES'
+        guidanceRead: 'YES',
+        receipt_preference: 'none'
       };
 
-      // Reset the database mock to a clean state
-      const originalDb = new sqlite3.Database(':memory:');
-      getDatabase.mockReturnValue(originalDb);
-      
-      // Create the table
-      await new Promise((resolve) => {
-        originalDb.run(`
-          CREATE TABLE IF NOT EXISTS registrations (
-            id TEXT PRIMARY KEY,
-            referenceNumber TEXT NOT NULL,
-            formType TEXT NOT NULL,
-            formTypeOtherText TEXT,
-            penColourNotUsed TEXT NOT NULL,
-            guidanceRead TEXT NOT NULL,
-            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-          )
-        `, (err) => {
-          if (err) throw err;
-          resolve();
-        });
-      });
-
-      // When I POST it to the endpoint
-      const response = await request(app)
-        .post('/api/v1/registrations')
-        .send(validData)
-        .expect(201);
-
-      // Then I should get a reference number that matches the required format
-      expect(response.body).toHaveProperty('referenceNumber');
-      expect(response.body.referenceNumber).toMatch(/^[A-Z0-9]{8}$/);
-      
-      // Close the db
-      await new Promise((resolve) => {
-        originalDb.close(resolve);
-      });
-    });
-
-    it('should handle reference number collisions', async () => {
-      // Given a valid registration request
-      const validData = {
-        formType: 'B07',
-        penColourNotUsed: 'GREEN',
-        guidanceRead: 'LOOKED_AT_NOW'
-      };
-
-      // Setup a database that will simulate a collision then success
-      // First reference check returns a collision, second one is unique
-      let checkCount = 0;
+      // Setup a mock database that will succeed
       const mockDb = {
         get: (query, params, callback) => {
-          // If checking for an existing reference
-          if (query.includes('referenceNumber')) {
-            // First time: simulate collision for any reference
-            if (checkCount === 0) {
-              checkCount++;
-              callback(null, { id: 'existing-id' }); // Collision
-            } else {
-              // Second time: no collision
-              callback(null, null);
-            }
-          } else {
-            callback(null, null); // No collision for other queries
-          }
+          // Return no collision for reference number check
+          callback(null, null);
         },
         run: (query, params, callback) => {
           // Allow the insert to succeed
@@ -514,12 +673,56 @@ describe('Registrations API Tests', () => {
         .send(validData)
         .expect(201);
 
-      // Then I should get a success response with a reference number
+      // Then I should get a reference number that matches the required format
       expect(response.body).toHaveProperty('referenceNumber');
       expect(response.body.referenceNumber).toMatch(/^[A-Z0-9]{8}$/);
+    });
+
+    it('should handle reference number collisions', async () => {
+      const existingReference = 'ABCD1234';
       
-      // And the check should have happened at least twice
-      expect(checkCount).toBeGreaterThan(0);
+      // Set up a database that simulates a collision on first attempt
+      let callCount = 0;
+      const mockDb = {
+        get: (query, params, callback) => {
+          if (query.includes('referenceNumber')) {
+            // Return collision on first call, no collision on second
+            callCount++;
+            if (callCount === 1) {
+              callback(null, { id: 'existing-id' });
+            } else {
+              callback(null, null);
+            }
+          } else {
+            callback(null, null);
+          }
+        },
+        run: (query, params, callback) => {
+          callback(null);
+        }
+      };
+      
+      getDatabase.mockReturnValue(mockDb);
+      
+      // Given a valid registration
+      const validData = {
+        formType: 'AD01',
+        penColourNotUsed: 'BLUE',
+        guidanceRead: 'YES',
+        receipt_preference: 'none'
+      };
+      
+      // When I POST it to the endpoint
+      const response = await request(app)
+        .post('/api/v1/registrations')
+        .send(validData)
+        .expect(201);
+      
+      // Then I should get a success response with a reference number
+      expect(response.body).toHaveProperty('referenceNumber');
+      
+      // And the get method should have been called more than once (checking for collisions)
+      expect(callCount).toBeGreaterThan(1);
     });
   });
 }); 
