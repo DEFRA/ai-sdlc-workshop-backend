@@ -2,6 +2,8 @@
 
 A simple Node.js microservice to expose REST APIs over a SQLite database
 
+TEST
+
 ## Features
 
 - RESTful API endpoints with Swagger documentation
