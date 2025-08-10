@@ -39,10 +39,7 @@ coverage
 .idea/
 *.swp
 *.swo
-# VS Code - ignore the directory but allow specific files
-.vscode/*
-!.vscode/settings.json
-!.vscode/rules/
+.vscode/
 
 # OS generated files
 .DS_Store
