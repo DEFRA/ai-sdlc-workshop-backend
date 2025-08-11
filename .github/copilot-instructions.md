@@ -5,8 +5,8 @@
 **ALWAYS start every interaction by stating:**
 1. "I am GitHub Copilot"
 2. Stating what model will be used
-3. Statting what custom instructions files will be used from `.github/instructions/`"
-3. Then proceed with the user's request
+3. Stating what custom instructions files will be used from `.github/instructions/`
+4. Then proceed with the user's request
 
 ## Overview
 This project uses GitHub Copilot custom instructions in `.github/instructions/` (see [VS Code Copilot Customization](https://code.visualstudio.com/docs/copilot/copilot-customization)).
